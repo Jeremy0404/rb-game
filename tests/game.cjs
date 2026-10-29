@@ -16,7 +16,7 @@ function check(ok,label){if(!ok)throw Error(label);console.log('PASS '+label);}
 for(const route of routes){
  level=route.room;load();started=true;won=false;deaths=0;keys.clear();
  for(let frame=0;frame<route.frames;frame++){
-  keys.delete('ArrowLeft');keys.delete('ArrowRight');keys.add(roomId()===5&&traps.exit?'ArrowLeft':'ArrowRight');
+  keys.delete('ArrowLeft');keys.delete('ArrowRight');keys.add(roomId()===5&&traps.leg===1?'ArrowLeft':'ArrowRight');
   if(route.jumps.includes(frame)){keys.delete('Space');input('Space');}update(STEP);
  }
  check(deaths===0&&(level!==route.room||won),'complete room '+(route.room+1));
@@ -24,7 +24,7 @@ for(const route of routes){
 reset();started=true;
 for(const route of routes){
  for(let frame=0;frame<route.frames;frame++){
-  keys.delete('ArrowLeft');keys.delete('ArrowRight');keys.add(roomId()===5&&traps.exit?'ArrowLeft':'ArrowRight');
+  keys.delete('ArrowLeft');keys.delete('ArrowRight');keys.add(roomId()===5&&traps.leg===1?'ArrowLeft':'ArrowRight');
   if(route.jumps.includes(frame)){keys.delete('Space');input('Space');}update(STEP);
  }
 }
@@ -69,10 +69,28 @@ level=ROOM_ORDER.indexOf(4);load();p.x=200;p.y=432;update(STEP);check(!traps.ove
 p.vy=-300;p.support=null;update(STEP);check(!!traps.overhead,'jump activates overhead ambush');
 level=ROOM_ORDER.indexOf(6);load();p.x=780;update(STEP);check(!active(platforms.find(b=>b.kind==='trapdoor')),'exit approach opens floor');
 level=ROOM_ORDER.indexOf(5);load();p.x=790;for(let i=0;i<60;i++)update(STEP);
-check(exitX===60&&roomId()===5,'door returns to start and does not collect player while moving');
-p.x=880;p.y=432;update(STEP);check(roomId()===5,'old exit cannot finish room');
-p.x=60;p.y=432;update(STEP);check(won,'return to start completes finale');
-check(traps.doorFloor,'final return changes previously safe floor');
+check(exitX===60&&traps.leg===1&&!won,'first approach sends door back to start');
+p.x=880;p.y=432;update(STEP);check(!won,'first visit to original exit cannot finish room');
+p.x=60;p.y=432;update(STEP);check(traps.leg===2&&!won&&!exitReady(),'return to left starts third traversal without winning');
+check(traps.doorFloor,'return changes previously safe floor');
+p.x=80;update(STEP);check(!won&&!exitReady(),'crossing moving door on second escape cannot win');
+p.x=60;p.y=432;for(let i=0;i<60;i++)update(STEP);
+check(exitX===880&&exitReady()&&!won,'door settles at original position for third traversal');
+check(active(platforms.find(b=>b.kind==='finalFloor')),'extra floor initially intact on third traversal');
+p.x=540;p.y=432;update(STEP);
+check(!active(platforms.find(b=>b.kind==='finalFloor'))&&hazards.some(h=>h.kind==='saw'),'third traversal adds hole and fast saw');
+p.x=880;p.y=432;p.vy=0;update(STEP);check(won,'only final rightward traversal completes finale');
+won=false;die();for(let i=0;i<45;i++)update(STEP);
+check(traps.leg===0&&exitX===880&&!traps.finalFloor&&!traps.doorFloor&&!traps.finalSweep,'death resets all three traversal stages');
+level=ROOM_ORDER.indexOf(3);load();keys.clear();
+const firstSaw=hazards.find(h=>h.kind==='saw');roomTime=.7;updateHazards();const movedSaw=hazards.find(h=>h.kind==='saw');
+check(firstSaw.cx===movedSaw.cx&&Math.abs(firstSaw.cy-movedSaw.cy)>15,'introductory saw moves vertically');
+check(hitsHazard({x:movedSaw.cx-5,y:movedSaw.cy-5,w:10,h:10},movedSaw),'saw centre kills');
+check(!hitsHazard({x:movedSaw.cx+15,y:movedSaw.cy+15,w:2,h:2},movedSaw),'circular saw collision excludes empty square corners');
+level=ROOM_ORDER.indexOf(4);load();p.x=320;roomTime=1;updateHazards();const fastStart=hazards.find(h=>h.kind==='saw');roomTime+=.1;updateHazards();const fastEnd=hazards.find(h=>h.kind==='saw');
+check(fastStart.cy===fastEnd.cy&&fastStart.cx-fastEnd.cx>100,'horizontal saw travels faster than 1000 pixels per second');
+deaths=0;p.x=fastEnd.cx-12;p.y=fastEnd.cy-14;p.support=null;p.vy=0;update(STEP);check(deaths===1,'fast saw collision is detected by fixed simulation step');
+level=ROOM_ORDER.indexOf(4);load();p.x=320;roomTime=1;updateHazards();roomTime=2.2;updateHazards();check(!hazards.some(h=>h.kind==='saw'),'fast ambush leaves the room instead of looping indefinitely');
 reset();started=true;p.y=600;update(STEP);check(deaths===1,'single death count');for(let i=0;i<50;i++)update(STEP);check(!dead&&p.x===35,'automatic respawn');
 reset();check(!won&&!level&&!deaths&&!elapsed,'reset');
 `,context);
@@ -80,6 +98,7 @@ const source=fs.readFileSync(path.join(__dirname,'../dist/game.js'),'utf8');
 const render=source.slice(source.indexOf(' for(const b of platforms)',source.indexOf('function draw()')),source.indexOf(' for(const h of hazards)',source.indexOf('function draw()')));
 if(/globalAlpha|Math.sin|phase|revealed|crumble|blink|fillText/.test(render))throw Error('Platform rendering leaks a trap hint');
 console.log('PASS uniform intact surfaces: no countdown, crack, tint or shaking');
+
 
 
 

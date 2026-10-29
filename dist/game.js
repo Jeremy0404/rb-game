@@ -6,6 +6,13 @@ const keys=new Set(),TOTAL=ROOM_ORDER.length,CRUMBLE_DELAY=.09,STEP=1/120;
 let level=0,deaths=0,elapsed=0,started=false,won=false,dead=0,particles=[],platforms=[],hazards=[],traps={},exitX=880,exitY=404,roomTime=0,acc=0,last=0,p={};
 const rect=(x,y,w,h,kind='solid',options={})=>({x,y,w,h,kind,ox:x,oy:y,t:0,dx:0,dy:0,...options});
 const overlap=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
+const saw=(cx,cy,r=17)=>rect(cx-r,cy-r,r*2,r*2,'saw',{cx,cy,r});
+function hitsHazard(body,h){
+ if(h.kind!=='saw')return overlap(body,h);
+ const x=Math.max(body.x,Math.min(h.cx,body.x+body.w)),y=Math.max(body.y,Math.min(h.cy,body.y+body.h));
+ return (h.cx-x)**2+(h.cy-y)**2<(h.r-1)**2;
+}
+function exitReady(){return roomId()!==5||(traps.leg===2&&exitX===880);}
 function load(){
  p={x:35,y:432,w:24,h:28,vx:0,vy:0,ground:true,coyote:.09,buffer:0,support:null};
  roomTime=0;traps={};dead=0;hazards=[];exitX=895;exitY=404;
@@ -15,12 +22,12 @@ function load(){
  if(roomId()===2){platforms=[rect(0,460,200,80),rect(255,415,130,18),rect(420,365,130,18,'ghost'),rect(335,455,85,18),rect(570,430,120,18),rect(710,385,90,18,'dodge',{shift:110}),rect(830,325,130,215)];exitY=269;}
  if(roomId()===3){platforms=[rect(0,460,230,80),rect(305,410,120,18),rect(490,355,120,18),rect(680,410,110,18),rect(845,460,115,80)];}
  if(roomId()===4){platforms=[rect(0,460,355,80),rect(355,460,110,80,'crumble'),rect(465,460,205,80),rect(670,460,105,80,'crumble'),rect(775,460,185,80)];}
- if(roomId()===5){platforms=[rect(0,460,110,80),rect(110,460,50,80,'trapdoor'),rect(160,460,800,80)];exitX=880;}
+ if(roomId()===5){platforms=[rect(0,460,110,80),rect(110,460,50,80,'trapdoor'),rect(160,460,360,80),rect(520,460,55,80,'finalFloor'),rect(575,460,385,80)];exitX=880;traps.leg=0;}
  if(roomId()===6){platforms=[rect(0,460,180,80),rect(180,460,115,80,'crumble'),rect(295,460,245,80),rect(540,460,110,80,'crumble'),rect(650,460,155,80),rect(805,460,95,80,'trapdoor'),rect(900,460,60,80)];exitX=922;}
  if(roomId()===7){platforms=[rect(0,460,220,80),rect(225,410,90,18,'dodge',{shift:110}),rect(470,360,110,18,'ghost'),rect(400,465,70,18),rect(580,435,100,18),rect(700,385,90,18,'vanish'),rect(635,480,90,18),rect(805,425,155,115)];exitY=369;}
  p.support=platforms[0];updateHazards();document.getElementById('status').textContent='';
 }
-function active(b){return b.kind!=='ghost'&&!(b.kind==='crumble'&&b.t>=CRUMBLE_DELAY)&&!(b.kind==='vanish'&&b.t>0)&&!(b.kind==='trapdoor'&&traps.doorFloor);}
+function active(b){return b.kind!=='ghost'&&!(b.kind==='crumble'&&b.t>=CRUMBLE_DELAY)&&!(b.kind==='vanish'&&b.t>0)&&!(b.kind==='trapdoor'&&traps.doorFloor)&&!(b.kind==='finalFloor'&&traps.finalFloor);}
 function burst(x,y,color){for(let i=0;i<16;i++)particles.push({x,y,vx:(Math.random()-.5)*380,vy:(Math.random()-.7)*380,t:.45,color});}
 function die(){if(dead||won)return;deaths++;dead=.32;burst(p.x+12,p.y+14,'#d5ff70');}
 function input(k){if(!keys.has(k)&&k==='Space'&&!won)p.buffer=.12;keys.add(k);started=true;}
@@ -45,18 +52,33 @@ function updateHazards(){hazards=[];
   if(p.x>660&&!traps.fall)traps.fall=roomTime;
   if(traps.fall)hazards.push(rect(675,Math.min(418,-60+Math.max(0,roomTime-traps.fall-.12)*1350),55,42,'crusher'));
  }
- if(roomId()===3){if(p.x>470&&!traps.ceiling)traps.ceiling=roomTime;if(traps.ceiling)hazards.push(rect(480,Math.min(310,-65+Math.max(0,roomTime-traps.ceiling-.70)*1150),140,45,'crusher'));}
+ if(roomId()===3){
+  hazards.push(saw(360,360-24*Math.sin(roomTime*1.6)));
+  if(p.x>470&&!traps.ceiling)traps.ceiling=roomTime;if(traps.ceiling)hazards.push(rect(480,Math.min(310,-65+Math.max(0,roomTime-traps.ceiling-.70)*1150),140,45,'crusher'));
+ }
  // A jump that looks sensible trips an overhead ambush. Walking underneath is safe.
  if(roomId()===4){if(p.x>155&&p.x<290&&p.vy<0&&!traps.overhead)traps.overhead=roomTime;
   if(traps.overhead)hazards.push(rect(155,348,150,25,'crusher'));
   if(p.x>510&&!traps.pop)traps.pop=roomTime;
   if(traps.pop&&roomTime-traps.pop>.10)hazards.push(rect(555,432,42,28,'spikes'));
+  if(p.x>300&&traps.sweep===undefined)traps.sweep=roomTime;
+  if(traps.sweep!==undefined){const x=980-(roomTime-traps.sweep)*1050;if(x>-20)hazards.push(saw(x,420));}
  }
  if(roomId()===5){hazards.push(rect(235,438,50,22,'spikes'),rect(440,438,50,22,'spikes'),rect(655,438,50,22,'spikes'));
-  if(p.x>775&&!traps.exit)traps.exit=roomTime;
-  if(traps.exit){exitX=Math.max(60,880-(roomTime-traps.exit)*2400);if(p.x<195)traps.doorFloor=true;}
+  if(traps.leg===0&&p.x>775){traps.leg=1;traps.exit=roomTime;}
+  if(traps.leg===1){
+   exitX=Math.max(60,880-(roomTime-traps.exit)*2400);
+   if(p.x<195)traps.doorFloor=true;
+   if(exitX===60&&p.x<100){traps.leg=2;traps.lastExit=roomTime;}
+  }
+  if(traps.leg===2){
+   exitX=Math.min(880,60+(roomTime-traps.lastExit)*2400);
+   if(p.x>495)traps.finalFloor=true;
+   if(p.x>300&&traps.finalSweep===undefined)traps.finalSweep=roomTime;
+   if(traps.finalSweep!==undefined){const x=980-(roomTime-traps.finalSweep)*1150;if(x>-20)hazards.push(saw(x,420));}
+  }
  }
- if(roomId()===6){if(p.x>775)traps.doorFloor=true;hazards.push(rect(390,438,42,22,'spikes'));}
+ if(roomId()===6){if(p.x>775)traps.doorFloor=true;hazards.push(rect(390,438,42,22,'spikes'),saw(480,411+24*Math.sin(roomTime*1.3)));}
 }
 
 function update(dt){
@@ -74,8 +96,8 @@ function update(dt){
   if(b.kind==='ghost'){b.revealed=true;continue;}if(!active(b))continue;
   p.y=b.y-p.h;p.vy=0;p.ground=true;p.support=b;if(b.kind==='crumble'&&!b.t)b.t=.001;
  }}
- for(const h of hazards)if(overlap({x:p.x+2,y:p.y+2,w:p.w-4,h:p.h-2},h))die();if(p.y+p.h>528)die();
- if(!dead&&!(roomId()===5&&(!traps.exit||exitX>60))&&overlap(p,rect(exitX,exitY,30,56))){if(level<TOTAL-1){level++;load();}else{won=true;burst(p.x,p.y,'#d5ff70');document.getElementById('status').textContent=`Terminé · ${deaths} morts · ${elapsed.toFixed(1)} s`;}}
+ for(const h of hazards)if(hitsHazard({x:p.x+2,y:p.y+2,w:p.w-4,h:p.h-2},h))die();if(p.y+p.h>528)die();
+ if(!dead&&exitReady()&&overlap(p,rect(exitX,exitY,30,56))){if(level<TOTAL-1){level++;load();}else{won=true;burst(p.x,p.y,'#d5ff70');document.getElementById('status').textContent=`Terminé · ${deaths} morts · ${elapsed.toFixed(1)} s`;}}
 }
 function box(x,y,w,h,color){ctx.fillStyle=color;ctx.fillRect(x,y,w,h);}
 function spikes(h){ctx.fillStyle='#ff7979';for(let x=h.x;x<h.x+h.w;x+=14){ctx.beginPath();ctx.moveTo(x,h.y+h.h);ctx.lineTo(x+7,h.y);ctx.lineTo(Math.min(x+14,h.x+h.w),h.y+h.h);ctx.fill();}}
@@ -89,7 +111,11 @@ function draw(){ctx.clearRect(0,0,960,540);ctx.strokeStyle='#222936';ctx.lineWid
   if(!active(b)&&b.kind!=='ghost')continue;
   box(b.x,b.y,b.w,b.h,'#414d62');box(b.x,b.y,b.w,3,'#8493ab');
  }
- for(const h of hazards){if(h.kind==='spikes')spikes(h);else if(h.kind==='saw'){ctx.save();ctx.translate(h.x+14,h.y+14);ctx.rotate(roomTime*6);ctx.fillStyle='#ff7979';for(let i=0;i<8;i++){ctx.rotate(Math.PI/4);ctx.fillRect(-3,-18,6,36);}ctx.fillStyle='#171c27';ctx.beginPath();ctx.arc(0,0,6,0,Math.PI*2);ctx.fill();ctx.restore();}else{box(h.x,h.y,h.w,h.h,'#ff7979');spikes(rect(h.x,h.y+h.h-10,h.w,10));}}
+ for(const h of hazards){if(h.kind==='spikes')spikes(h);else if(h.kind==='saw'){
+  ctx.save();ctx.translate(h.cx,h.cy);ctx.rotate(roomTime*9);ctx.fillStyle='#ff7979';ctx.beginPath();
+  for(let i=0;i<24;i++){const a=i*Math.PI/12,r=i%2?h.r-5:h.r;ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);}ctx.closePath();ctx.fill();
+  ctx.fillStyle='#171c27';ctx.beginPath();ctx.arc(0,0,5,0,Math.PI*2);ctx.fill();ctx.restore();
+ }else{box(h.x,h.y,h.w,h.h,'#ff7979');spikes(rect(h.x,h.y+h.h-10,h.w,10));}}
  ctx.strokeStyle='#d5ff70';ctx.lineWidth=3;ctx.strokeRect(exitX,exitY,30,54);box(exitX+22,exitY+27,4,4,'#d5ff70');ctx.fillStyle='#d5ff70';ctx.font='20px monospace';ctx.fillText('↓',exitX+9,exitY-10);
  if(!dead){box(p.x,p.y,p.w,p.h,'#d5ff70');box(p.x+6,p.y+7,4,4,'#182319');box(p.x+15,p.y+7,4,4,'#182319');}
  for(const q of particles){ctx.globalAlpha=Math.max(0,q.t*2);box(q.x,q.y,5,5,q.color);}ctx.globalAlpha=1;
@@ -97,6 +123,7 @@ function draw(){ctx.clearRect(0,0,960,540);ctx.strokeStyle='#222936';ctx.lineWid
  document.getElementById('stats').textContent=`${level+1} / ${TOTAL} · ${deaths} MORT${deaths>1?'S':''} · ${elapsed.toFixed(1)} s`;
 }
 function frame(t){if(!last)last=t;acc+=Math.min((t-last)/1000,.05);last=t;while(acc>=STEP){update(STEP);acc-=STEP;}draw();requestAnimationFrame(frame);}load();requestAnimationFrame(frame);
+
 
 
 
