@@ -11,13 +11,13 @@ function load(){
  roomTime=0;traps={};dead=0;hazards=[];exitX=895;exitY=404;
  // Keep room identities stable while ordering them by learning and combinations.
  if(roomId()===0){platforms=[rect(0,460,270,80),rect(270,460,90,80,'crumble'),rect(360,460,600,80)];}
- if(roomId()===1){platforms=[rect(0,460,960,80),rect(380,354,90,16),rect(585,316,105,16)];}
- if(roomId()===2){platforms=[rect(0,460,200,80),rect(255,415,130,18),rect(420,365,130,18,'ghost'),rect(420,455,130,18),rect(590,400,135,18,'dodge',{shift:38}),rect(790,445,170,95)];exitY=389;}
+ if(roomId()===1){platforms=[rect(0,460,730,80),rect(815,460,145,80),rect(380,354,90,16),rect(585,316,105,16)];}
+ if(roomId()===2){platforms=[rect(0,460,200,80),rect(255,415,130,18),rect(420,365,130,18,'ghost'),rect(335,455,85,18),rect(570,430,120,18),rect(710,385,90,18,'dodge',{shift:110}),rect(830,325,130,215)];exitY=269;}
  if(roomId()===3){platforms=[rect(0,460,230,80),rect(305,410,120,18),rect(490,355,120,18),rect(680,410,110,18),rect(845,460,115,80)];}
  if(roomId()===4){platforms=[rect(0,460,355,80),rect(355,460,110,80,'crumble'),rect(465,460,205,80),rect(670,460,105,80,'crumble'),rect(775,460,185,80)];}
  if(roomId()===5){platforms=[rect(0,460,110,80),rect(110,460,50,80,'trapdoor'),rect(160,460,800,80)];exitX=880;}
  if(roomId()===6){platforms=[rect(0,460,180,80),rect(180,460,115,80,'crumble'),rect(295,460,245,80),rect(540,460,110,80,'crumble'),rect(650,460,155,80),rect(805,460,95,80,'trapdoor'),rect(900,460,60,80)];exitX=922;}
- if(roomId()===7){platforms=[rect(0,460,200,80),rect(255,410,120,18,'dodge',{shift:35}),rect(430,360,125,18,'ghost'),rect(430,455,125,18),rect(610,405,125,18,'vanish'),rect(610,475,125,18),rect(795,425,165,115)];exitY=369;}
+ if(roomId()===7){platforms=[rect(0,460,220,80),rect(225,410,90,18,'dodge',{shift:110}),rect(470,360,110,18,'ghost'),rect(400,465,70,18),rect(580,435,100,18),rect(700,385,90,18,'vanish'),rect(635,480,90,18),rect(805,425,155,115)];exitY=369;}
  p.support=platforms[0];updateHazards();document.getElementById('status').textContent='';
 }
 function active(b){return b.kind!=='ghost'&&!(b.kind==='crumble'&&b.t>=CRUMBLE_DELAY)&&!(b.kind==='vanish'&&b.t>0)&&!(b.kind==='trapdoor'&&traps.doorFloor);}
@@ -42,8 +42,8 @@ function updateHazards(){hazards=[];
   hazards.push(rect(265,438,50,22,'spikes'),rect(550,438,55,22,'spikes'));
   if(p.x>325&&!traps.pop)traps.pop=roomTime;
   if(traps.pop&&roomTime-traps.pop>.12)hazards.push(rect(375,438,24,22,'spikes'));
-  if(p.x>700&&!traps.fall)traps.fall=roomTime;
-  if(traps.fall)hazards.push(rect(755,Math.min(418,-60+Math.max(0,roomTime-traps.fall-.12)*1350),65,42,'crusher'));
+  if(p.x>660&&!traps.fall)traps.fall=roomTime;
+  if(traps.fall)hazards.push(rect(675,Math.min(418,-60+Math.max(0,roomTime-traps.fall-.12)*1350),55,42,'crusher'));
  }
  if(roomId()===3){if(p.x>470&&!traps.ceiling)traps.ceiling=roomTime;if(traps.ceiling)hazards.push(rect(480,Math.min(310,-65+Math.max(0,roomTime-traps.ceiling-.70)*1150),140,45,'crusher'));}
  // A jump that looks sensible trips an overhead ambush. Walking underneath is safe.

@@ -10,6 +10,7 @@ Le plaisir recherché est la découverte d'un piège, la mort puis le nouvel ess
 - Effondrement rapide ; zones d'atterrissage généreuses. Des pièges déterministes permettent d'apprendre après une mort.
 - Une porte qui fuit doit imposer un vrai trajet à refaire. La salle correspondante renvoie la porte au départ et interdit de gagner en la croisant pendant son déplacement.
 - Redémarrage rapide au début de la salle.
+- Un piège doit avoir une conséquence réelle : un joueur qui vise l'ancien emplacement ou tombe au centre d'une fausse plateforme doit rater son atterrissage. Un autre appui directement dessous ne doit pas le sauver automatiquement. Conserver un trajet gagnant après apprentissage.
 
 ## Version actuelle
 
@@ -21,11 +22,11 @@ La difficulté augmente par les surprises à mémoriser, les pièges combinés e
 
 1. **Premier piège** : un trou caché raccourci, puis un seul obstacle visible, éloigné. Apprendre le principe sans enchaînement exigeant.
 2. **Premier parcours en hauteur** : plateformes larges et un seul plafond piégé, avec davantage de temps pour quitter sa trajectoire.
-3. **Appuis trompeurs** : plateforme traversable puis plateforme qui fuit, avec des surfaces de récupération larges.
+3. **Appuis trompeurs** : faux appui au-dessus du vide, chemin inférieur décalé et plateforme qui fuit de 110 pixels. Le dernier appui est nécessaire pour monter à la sortie.
 4. **Fausse sécurité au sol** : plusieurs trous et un dernier sol qui s'ouvre près de la sortie.
-5. **Surprises combinées** : obstacles visibles, pics surgissants et bloc tombant. Il faut désormais anticiper ou s'arrêter après avoir appris le piège.
+5. **Surprises combinées** : obstacles visibles, pics surgissants et trou visible de 85 pixels. Le bloc tombe sur le rebord juste avant le trou, où le joueur est tenté de s'arrêter.
 6. **Mauvais réflexes** : sauter peut déclencher une embuscade, alors que les autres sections exigent de sauter. Mémoriser les exceptions.
-7. **Parcours trompeur composé** : fuite, faux appui et disparition avant l'atterrissage.
+7. **Parcours trompeur composé** : fuite de 110 pixels, faux appui et disparition avant l'atterrissage. Les appuis inférieurs sont décalés pour demander un choix de trajectoire et éviter les sauvetages automatiques.
 8. **Final aller-retour** : la porte revient au départ et une ancienne portion sûre du sol devient piégée sur le retour.
 
 Cette courbe est une intention de conception ; son ressenti doit être ajusté à partir des essais du joueur, et ne se déduit pas du seul fait que les tests trouvent un chemin gagnant.

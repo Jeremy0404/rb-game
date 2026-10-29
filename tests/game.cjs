@@ -29,9 +29,29 @@ for(const route of routes){
  }
 }
 check(won&&deaths===0,'full campaign in progression order');
-const groundRooms=[0,1,4,5,6];
+const groundRooms=[0,4,5,6];
 for(const room of groundRooms){level=ROOM_ORDER.indexOf(room);load();check(platforms.filter(b=>b.y===460).reduce((n,b)=>n+b.w,0)===960,'continuous initial floor room '+(room+1));}
 for(const room of [2,3,7]){level=ROOM_ORDER.indexOf(room);load();check(platforms.filter(b=>b.y===460).reduce((n,b)=>n+b.w,0)<450,'platform room '+(room+1));}
+level=ROOM_ORDER.indexOf(1);load();started=true;won=false;deaths=0;keys.clear();
+check(!platforms.some(b=>active(b)&&b.x<815&&b.x+b.w>730&&b.y===460),'visible gap in front of falling block');
+p.x=690;p.y=432;p.support=platforms[0];for(let i=0;i<100&&!dead;i++)update(STEP);
+check(deaths===1,'stopping before visible gap is punished by falling block');
+for(const id of [2,7]){
+ level=ROOM_ORDER.indexOf(id);load();deaths=0;keys.clear();
+ const fake=platforms.find(b=>b.kind==='ghost');p.x=fake.x+fake.w/2-p.w/2;p.y=fake.y-p.h-4;p.vy=80;p.support=null;
+ for(let i=0;i<180&&!dead;i++)update(STEP);
+ check(deaths===1,'room '+(level+1)+': falling through fake without correction is fatal');
+ level=ROOM_ORDER.indexOf(id);load();deaths=0;keys.clear();
+ const fleeing=platforms.find(b=>b.kind==='dodge'),base=platforms[platforms.indexOf(fleeing)-1];
+ p.x=base.x+base.w-p.w-6;p.y=base.y-p.h;p.vy=0;p.support=base;p.ground=true;
+ const target=fleeing.ox+fleeing.w/2-p.w/2;p.buffer=.12;
+ for(let i=0;i<240&&!dead;i++){keys.clear();if(p.x<target)keys.add('ArrowRight');update(STEP);}
+ check(deaths===1,'room '+(level+1)+': aiming at original fleeing platform misses');
+}
+level=ROOM_ORDER.indexOf(7);load();deaths=0;keys.clear();let landingTrap=platforms.find(b=>b.kind==='vanish');
+p.x=landingTrap.x+landingTrap.w/2-p.w/2;p.y=landingTrap.y-p.h-4;p.vy=80;p.support=null;
+for(let i=0;i<180&&!dead;i++)update(STEP);
+check(deaths===1,'vanishing platform does not drop player onto automatic safety net');
 level=ROOM_ORDER.indexOf(0);load();started=true;won=false;keys.clear();let fragile=platforms[1];
 p.x=300;p.y=432;p.support=fragile;p.ground=true;update(STEP);
 check(active(fragile),'floor initially solid');for(let i=0;i<12;i++)update(STEP);
