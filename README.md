@@ -22,19 +22,6 @@ docker build -t rb-game .
 docker run --rm -p 8080:8080 rb-game
 ```
 
-## Deploy
-
-The game is served at https://rbgame.jerco.fr from the `mediaserver` host: a read-only
-`nginx-unprivileged` container on the `scoobydoo` network, behind Nginx Proxy Manager, with
-`public/` bind-mounted from `~/rb-game/` on the server. From an up-to-date, clean `main`:
-
-```bash
-./deploy/ship.sh
-```
-
-It copies `deploy/` and `public/` to the server with `rsync`, starts the container or reloads
-nginx, and fails unless the public URL answers 200.
-
 ## Scripts
 
 - `npm run lint` — lint the game and the tests with ESLint.
