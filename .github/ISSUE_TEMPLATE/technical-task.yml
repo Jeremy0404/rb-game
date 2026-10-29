@@ -1,0 +1,46 @@
+name: Technical task
+description: Technical debt, refactoring, configuration, infra — not a user-facing feature.
+title: "[tech]: "
+labels: ["chore", "needs-refining"]
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Why this task, what problem it solves or what debt it reduces.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected outcome
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Verifiable, one per line.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and exclusions
+    validations:
+      required: false
+  - type: textarea
+    id: test-commands
+    attributes:
+      label: Test commands
+    validations:
+      required: false
+  - type: checkboxes
+    id: ready
+    attributes:
+      label: Ready for agent?
+      options:
+        - label: Goal and context are enough to work without back-and-forth
+        - label: Verifiable acceptance criteria listed above
+        - label: Scope and exclusions specified
+        - label: Test commands known
