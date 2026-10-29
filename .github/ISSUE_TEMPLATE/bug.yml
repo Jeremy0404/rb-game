@@ -1,0 +1,48 @@
+name: Bug
+description: A behavior that differs from the expected behavior.
+title: "[bug]: "
+labels: ["fix", "needs-refining"]
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: What's happening, under what conditions, since when.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Verifiable, one per line — what proves this is fixed.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and exclusions
+      description: What the fix must cover, and what it must explicitly not touch.
+    validations:
+      required: false
+  - type: textarea
+    id: test-commands
+    attributes:
+      label: Test commands
+      description: How to verify locally (exact commands, not a vague description).
+    validations:
+      required: false
+  - type: checkboxes
+    id: ready
+    attributes:
+      label: Ready for agent?
+      options:
+        - label: Goal and context are enough to work without back-and-forth
+        - label: Verifiable acceptance criteria listed above
+        - label: Scope and exclusions specified
+        - label: Test commands known
