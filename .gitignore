@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Environment (secrets stay out of the repo; the example is tracked)
+.env
+.env.*
+!.env.example
+
+# Tooling / IDE (local-only, not shared)
+.claude/
+.idea/
+graphify-out/
+CLAUDE.md
+
+# Logs / misc
+*.log
+.DS_Store

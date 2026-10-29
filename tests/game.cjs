@@ -9,7 +9,7 @@ const context = vm.createContext({
   addEventListener(){}, requestAnimationFrame(){},
   routes: JSON.parse(fs.readFileSync(path.join(__dirname, 'routes.json'), 'utf8'))
 });
-vm.runInContext(fs.readFileSync(path.join(__dirname, '../dist/game.js'), 'utf8'), context);
+vm.runInContext(fs.readFileSync(path.join(__dirname, '../public/game.js'), 'utf8'), context);
 
 vm.runInContext(`
 function check(ok,label){if(!ok)throw Error(label);console.log('PASS '+label);}
@@ -94,7 +94,7 @@ level=ROOM_ORDER.indexOf(4);load();p.x=320;roomTime=1;updateHazards();roomTime=2
 reset();started=true;p.y=600;update(STEP);check(deaths===1,'single death count');for(let i=0;i<50;i++)update(STEP);check(!dead&&p.x===35,'automatic respawn');
 reset();check(!won&&!level&&!deaths&&!elapsed,'reset');
 `,context);
-const source=fs.readFileSync(path.join(__dirname,'../dist/game.js'),'utf8');
+const source=fs.readFileSync(path.join(__dirname,'../public/game.js'),'utf8');
 const render=source.slice(source.indexOf(' for(const b of platforms)',source.indexOf('function draw()')),source.indexOf(' for(const h of hazards)',source.indexOf('function draw()')));
 if(/globalAlpha|Math.sin|phase|revealed|crumble|blink|fillText/.test(render))throw Error('Platform rendering leaks a trap hint');
 console.log('PASS uniform intact surfaces: no countdown, crack, tint or shaking');
