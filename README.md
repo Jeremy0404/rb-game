@@ -27,3 +27,17 @@ docker run --rm -p 8080:8080 rb-game
 - `npm run lint` — lint the game and the tests with ESLint.
 - `npm test` — replay the recorded winning routes of every room against the real update loop and
   run the targeted trap checks.
+
+## Playing on a phone
+
+Open the game in your browser. Landscape gives the most room: direction buttons sit on the
+left and jump on the right, outside the playfield. Slide between directions and hold jump
+longer for a higher jump. Portrait is also supported.
+
+The game pauses when you switch apps or rotate the screen; tap **Reprendre** to continue.
+The pause menu lets you show or hide touch controls and request fullscreen when supported.
+On desktop, **Escape** toggles pause; the existing movement keys still work.
+
+`npm test` also checks simultaneous input sources, touch cancellation, direction sliding,
+and pause/resume. Real-device checks on iPhone and Android are still needed for touch comfort
+and system gestures; browser viewport checks alone do not establish those.
