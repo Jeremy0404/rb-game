@@ -1,8 +1,10 @@
+/* exported setControl, pause, resume, reset, resetClock */
 'use strict';
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
 const ROOM_ORDER=[0,3,2,6,1,4,7,5];
 const roomId=()=>ROOM_ORDER[level];
-const keys=new Set(),TOTAL=ROOM_ORDER.length,CRUMBLE_DELAY=.09,STEP=1/120;
+const keys=new Set(),controlSources=new Map(),TOTAL=ROOM_ORDER.length,CRUMBLE_DELAY=.09,STEP=1/120;
+let paused=false;
 let level=0,deaths=0,elapsed=0,started=false,won=false,dead=0,particles=[],platforms=[],hazards=[],traps={},exitX=880,exitY=404,roomTime=0,acc=0,last=0,p={};
 const rect=(x,y,w,h,kind='solid',options={})=>({x,y,w,h,kind,ox:x,oy:y,t:0,dx:0,dy:0,...options});
 const overlap=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
@@ -32,10 +34,27 @@ function burst(x,y,color){for(let i=0;i<16;i++)particles.push({x,y,vx:(Math.rand
 function die(){if(dead||won)return;deaths++;dead=.32;burst(p.x+12,p.y+14,'#d5ff70');}
 function input(k){if(!keys.has(k)&&k==='Space'&&!won)p.buffer=.12;keys.add(k);started=true;}
 function release(k){keys.delete(k);if(k==='Space'&&p.vy< -180)p.vy=-180;}
-addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','Space','KeyA','KeyD','KeyQ','KeyR'].includes(e.code)){e.preventDefault();if(e.code==='KeyR'&&!e.repeat)reset();else input(e.code);}});
-addEventListener('keyup',e=>release(e.code));addEventListener('blur',()=>keys.clear());document.addEventListener('visibilitychange',()=>{keys.clear();last=0;acc=0;});
-document.querySelectorAll('[data-key]').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();b.setPointerCapture(e.pointerId);input(b.dataset.key);});for(const name of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(name,()=>release(b.dataset.key));});
-function reset(){level=deaths=elapsed=0;started=won=false;keys.clear();particles=[];load();canvas.focus();}document.getElementById('restart').onclick=reset;
+function setControl(source,key){
+ const previous=controlSources.get(source);
+ if(previous===key)return;
+ controlSources.delete(source);
+ if(previous&&![...controlSources.values()].includes(previous))release(previous);
+ if(!key||paused||won)return;
+ controlSources.set(source,key);input(key);
+}
+function resetClock(){last=0;acc=0;}
+function clearControls(){controlSources.clear();keys.clear();p.buffer=0;}
+function pause(){
+ clearControls();
+ paused=true;document.getElementById('pause-menu').hidden=false;
+ document.getElementById('resume').focus();
+}
+function resume(){
+ if(document.hidden)return;
+ clearControls();paused=false;last=0;acc=0;
+ document.getElementById('pause-menu').hidden=true;canvas.focus();
+}
+function reset(){level=deaths=elapsed=0;started=won=paused=false;clearControls();particles=[];last=0;acc=0;load();document.getElementById('pause-menu').hidden=true;canvas.focus();}
 function updatePlatforms(dt){for(const b of platforms){const x=b.x,y=b.y;
  if(b.kind==='crumble'&&b.t>0)b.t+=dt;
  if(b.kind==='vanish'&&!b.t&&p.vy>0&&p.x+p.w>b.x&&p.x<b.x+b.w&&p.y+p.h>b.y-55)b.t=roomTime;
@@ -82,6 +101,7 @@ function updateHazards(){hazards=[];
 }
 
 function update(dt){
+ if(paused)return;
  for(const q of particles){q.x+=q.vx*dt;q.y+=q.vy*dt;q.vy+=900*dt;q.t-=dt;}particles=particles.filter(q=>q.t>0);
  if(won||!started)return;elapsed+=dt;if(dead){dead-=dt;if(dead<=0)load();return;}roomTime+=dt;
  updatePlatforms(dt);updateHazards();
@@ -119,7 +139,7 @@ function draw(){ctx.clearRect(0,0,960,540);ctx.strokeStyle='#222936';ctx.lineWid
  ctx.strokeStyle='#d5ff70';ctx.lineWidth=3;ctx.strokeRect(exitX,exitY,30,54);box(exitX+22,exitY+27,4,4,'#d5ff70');ctx.fillStyle='#d5ff70';ctx.font='20px monospace';ctx.fillText('↓',exitX+9,exitY-10);
  if(!dead){box(p.x,p.y,p.w,p.h,'#d5ff70');box(p.x+6,p.y+7,4,4,'#182319');box(p.x+15,p.y+7,4,4,'#182319');}
  for(const q of particles){ctx.globalAlpha=Math.max(0,q.t*2);box(q.x,q.y,5,5,q.color);}ctx.globalAlpha=1;
- if(!started||won){box(260,200,440,95,'#10131bea');ctx.textAlign='center';ctx.fillStyle='#eaece5';ctx.font='bold 25px system-ui';ctx.fillText(won?'Terminé.':'←  →  +  Espace',480,240);ctx.fillStyle='#9da7b9';ctx.font='14px system-ui';ctx.fillText(won?`${deaths} morts · ${elapsed.toFixed(1)} s`:'Atteins la porte.',480,272);ctx.textAlign='left';}
+ if(!started||won){box(260,200,440,95,'#10131bea');ctx.textAlign='center';ctx.fillStyle='#eaece5';ctx.font='bold 25px system-ui';ctx.fillText(won?'Terminé.':document.body.classList.contains('touch')?'Atteins la porte.':'←  →  +  Espace',480,240);ctx.fillStyle='#9da7b9';ctx.font='14px system-ui';ctx.fillText(won?`${deaths} morts · ${elapsed.toFixed(1)} s`:document.body.classList.contains('touch')?'←  →  pour bouger · ↑ pour sauter':'Atteins la porte.',480,272);ctx.textAlign='left';}
  document.getElementById('stats').textContent=`${level+1} / ${TOTAL} · ${deaths} MORT${deaths>1?'S':''} · ${elapsed.toFixed(1)} s`;
 }
 function frame(t){if(!last)last=t;acc+=Math.min((t-last)/1000,.05);last=t;while(acc>=STEP){update(STEP);acc-=STEP;}draw();requestAnimationFrame(frame);}load();requestAnimationFrame(frame);
